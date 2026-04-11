@@ -12,6 +12,6 @@ This is Technical test answer for AI Engineer role @Shopee
 - Requirement:
   CSV parsing (large and small data), VDB using cosine similarity
   Platform:
-    Upload CSV -> List table
-    Upload Recipt -> extract -> convert into vector -> Qdrant VDB -> User query -> LLM -> (Rest / MCP) knowledge -> Result
+    1. Upload CSV -> List table
+    2. Upload Recipt -> extract -> convert into vector -> Qdrant VDB -> User query -> LLM -> (Rest / MCP) knowledge -> Result
 - Tech stack : Qdrant VDB, Local Docker, React UI, Nodejs + Typescript, Ollama model (LLM and embeddings), Github Action CI/CD, ComputerVision library
