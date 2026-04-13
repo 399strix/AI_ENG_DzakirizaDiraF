@@ -10,9 +10,23 @@ This is Technical test answer for AI Engineer role @Shopee
 
 # Coding TEST
 - Requirement:
-  1. CSV parsing (large and small data), VDB using cosine similarity
-  2. Platform:
+  1. CSV parsing (large and small data):
+  2. VDB using cosine similarity
+  3. Platform:
       - Upload CSV -> List table
       - Upload Recipt -> extract -> convert into vector -> Qdrant VDB -> User query -> LLM -> (Rest / MCP) knowledge -> Result
-  3. Docker using CI/CD pipeline local hosted
-- Tech stack : Qdrant VDB, Local Docker, React UI, Nodejs + Typescript, Ollama model (LLM and embeddings), Github Action CI/CD, ComputerVision library
+  4. Docker using CI/CD pipeline local hosted
+- Tech stack : Qdrant VDB, Local Docker, React UI, Nodejs + Typescript, Ollama model (LLM and embeddings), Github Action CI/CD, Tesseract extraction + gemma3 (Computer Vision)
+
+
+## Getting Started CSV Parser
+1. Navigate to ./consoleCSV terminal
+2. Run 'npm run start' then input the file local path
+3. Get see the insight
+  - While parsing small data, it can be stored on a temp memory to parse it manually without consuming too much memory. Parsing large csv file with contains more than 1Mil data, require streaming parse, so each line being parse while getting the insight as well, so the memory can be optimized to be used as the insight only.
+
+## Getting Started Food Receipt Agent
+1. Clone Repository
+2. Run 'docker compose up -d --build' to build image and run on Docker container
+3. Navigate to 'http://localhost:5173' then upload file 
+4. Ask the agent to get insight
