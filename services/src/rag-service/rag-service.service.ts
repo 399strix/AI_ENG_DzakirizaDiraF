@@ -66,17 +66,19 @@ export class RagService {
             const getID = `Id-${extractResult.store}-${extractResult.date}-${extractResult.currency}`;
             const batchIndex =  await this.GetVector(computerVision.response);
 
-            await this._QdrantClient.upsert('receipt_collection', {
-                wait: true,
-                points: [
-                    {
-                        id: crypto.createHash('md5').update(getID).digest('hex'),
-                        vector: batchIndex.embeddings[0],
-                        payload: extractResult
-                    }
-                    
-                ]
-            })
+            if(await this._QdrantClient.collectionExists('receipt_collection')){
+                await this._QdrantClient.upsert('receipt_collection', {
+                    wait: true,
+                    points: [
+                        {
+                            id: crypto.createHash('md5').update(getID).digest('hex'),
+                            vector: batchIndex.embeddings[0],
+                            payload: extractResult
+                        }
+                        
+                    ]
+                })
+            }else await this.createCollection();
 
         }catch(err){
             console.error('Error upserting collection:', err);
