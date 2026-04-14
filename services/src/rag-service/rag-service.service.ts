@@ -136,13 +136,13 @@ export class RagService {
                 type: 'function',
                 function: {
                 name: 'find_receipt_information',
-                description: 'Get all receipt information about food purchases within a specific date range from receipt uploaded. Use this for questions like "what i ate yesterday?", "what food i ate from 20 june until 27 june", "what food i eat between 20 june until 27 june", "what i eat last week?"',
+                description: 'Get all food receipt information within a specific date range from receipt uploaded. Use this for questions like "what i ate yesterday?", "what food i ate from 20 june until 27 june", "how much i spend in 31st December This month", "what i eat last week?"',
                 parameters: {
                     type: 'object',
                     required: [],
                     properties: {
-                        startDate: { type: 'string', description: `Longest date given of the receipt created in (YYYY-MM-DDTHH:mm) RFC3339 format, used for searching specific receipt by the oldest date or time. Use current date if neccessary ${new Date().toISOString()}`},
-                        endDate: { type: 'string', description: `Least date given of the receipt created in (YYYY-MM-DDTHH:mm) RFC3339format, used for searching specific receipt by the newer date or time ${new Date().toISOString()}`},
+                        startDate: { type: 'string', description: `Oldest date or time of the food receipt in (YYYY-MM-DDTHH:mm) RFC3339 format, used for searching specific food purchases by the date or time. Use current date if neccessary ${new Date().toISOString()}`},
+                        endDate: { type: 'string', description: `Recent date or time of the food receipt in (YYYY-MM-DDTHH:mm) RFC3339 format, used for searching specific food purchases by the date or time. Use current date if neccessary ${new Date().toISOString()}`},
                     },
                 },
                 },
@@ -151,7 +151,7 @@ export class RagService {
                 type: 'function',
                 function: {
                     name: 'find_receipt_withoutdate',
-                    description: 'Get all receipt information about food purchases from receipt uploaded. Use this for questions like "what is all my expense", "what food i eat recently", "how many receipt i have", "what kind of receipt i have"',
+                    description: 'Get all food receipt information from receipt uploaded. Use this for questions like "what is all my expense?", "what food i ate recently?", "how many receipt fo i have?", "what is the total spending of my purchases?"',
     
                 },
             },
