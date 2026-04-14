@@ -38,7 +38,7 @@ jobs:
 
       - name: Test Backend
         working-directory: ./services
-        run: npm run test:ci
+        run: npm run test:cov
 
       - name: Install Frontend
         working-directory: ./app
