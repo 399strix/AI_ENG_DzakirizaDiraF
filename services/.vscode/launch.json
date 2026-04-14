@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "NestJS Debug",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "program": "${workspaceFolder}/services/node_modules/.bin/nest",
+      "args": ["run", "start:debug"],
+      "restart": true,
+      "console": "integratedTerminal",
+    //   "protocol": "inspector",
+      "internalConsoleOptions": "neverOpen",
+    //   "sourceMapPathOverride": {
+    //     "${workspaceFolder}/services/dist/*": "${workspaceFolder}/services/src/*"
+    //   }
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+services:
+  backend:
+    build: ./services
+    container_name: shopee-backend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./services/.env.example
+    environment:
+      - QDRANT_URL=http://host.docker.internal:6333
+      - OLLAMA_URL=http://host.docker.internal:11434
+      - ORIGIN_URL=http://localhost:5173
+    depends_on:
+      - qdrant
+      - ollama
+
+  frontend:
+    build: ./app
+    container_name: react-ui
+    ports:
+      - "5173:80"
+    environment:
+      - BE_API_URL=http://localhost:3000
+    depends_on:
+      - backend
+
+  qdrant:
+    image: qdrant/qdrant
+    container_name: qdrant-compose
+    ports:
+      - "6333:6333"
+    volumes:
+      - ShopeeTech:/qdrant/storage
+
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  ShopeeTech:
+  ollama_data:
