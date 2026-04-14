@@ -1,5 +1,4 @@
 # AI-Engineer-DzakirizaDF
-This is Technical test answer for AI Engineer role @Shopee
 
 # Engineering Knowledge AI Agent Test 
 1. Rest API is standard communication over HTTP that is isolated each request, so should defined it manually in AI integeration. On the other hand, MCP stands as protocol for bridging AI with capabilities(tools, prompts, resources) that is stateful, so it maintaining context accross a session with JSON-RPC format.
