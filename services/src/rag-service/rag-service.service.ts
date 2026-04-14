@@ -112,7 +112,7 @@ export class RagService {
                     query: batchIndex.embeddings[0],
                     filter: {
                         must: [{ key: "date", range: { 
-                            gte: dateBefore, 
+                            gte: dateBefore ?? new Date().setDate(new Date().getDate()-1), 
                             lte: dateAfter ?? new Date().toISOString()
                         } }]
                     },
