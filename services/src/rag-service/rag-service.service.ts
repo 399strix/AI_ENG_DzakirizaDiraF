@@ -78,7 +78,10 @@ export class RagService {
                         
                     ]
                 })
-            }else await this.createCollection();
+            }else {
+                await this.createCollection();
+                await this.upsertCollection(base64);
+            }
 
         }catch(err){
             console.error('Error upserting collection:', err);
