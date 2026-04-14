@@ -114,8 +114,8 @@ export class RagService {
                     query: batchIndex.embeddings[0],
                     filter: {
                         must: [{ key: "date", range: { 
-                            gte: dateBefore ?? new Date().setDate(new Date().getDate()-1), 
-                            lte: dateAfter ?? new Date().toISOString()
+                            gte: dateBefore.toISOString() ?? new Date().setDate(new Date().getDate()-1).toString(), 
+                            lte: dateAfter.toISOString() ?? new Date().toISOString()
                         } }]
                     },
                     limit: 10,
@@ -137,14 +137,14 @@ export class RagService {
             {
                 type: 'function',
                 function: {
-                name: 'find_receipt_information',
-                description: 'Get all food receipt information within a specific date range from receipt uploaded. Use this for questions like "what i ate yesterday?", "what food i ate from 20 june until 27 june", "how much i spend in 31st December This month", "what i eat last week?"',
+                name: 'find_receipt_withtime',
+                description: 'Get all food receipt information within a specific date or time range. Use this for questions that mentioned time constraint "what i ate yesterday?", "what food i ate from 20 june until 27 june", "how much i spend in 31st December This month", "what i eat last week?"',
                 parameters: {
                     type: 'object',
-                    required: [],
+                    required: [ 'startDate', 'endDate'],
                     properties: {
-                        startDate: { type: 'string', description: `Oldest date or time of the food receipt in (YYYY-MM-DDTHH:mm) RFC3339 format, used for searching specific food purchases by the date or time. Use current date if neccessary ${new Date().toISOString()}`},
-                        endDate: { type: 'string', description: `Recent date or time of the food receipt in (YYYY-MM-DDTHH:mm) RFC3339 format, used for searching specific food purchases by the date or time. Use current date if neccessary ${new Date().toISOString()}`},
+                        startDate: { type: 'string', description: `The latest date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, used as time range of food receipt findings. Use current date if necessary ${new Date().toISOString()}`},
+                        endDate: { type: 'string', description: `The last date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, used as time range of food receipt findings. Use current date if necessary ${new Date().toISOString()}`},
                     },
                 },
                 },
@@ -165,17 +165,18 @@ Your Capabilities:
 - Answer questions about food purchases, expenses, items, and locations.
 - Use available tools to retrieve accurate data before answering.
 - Identify the number of food purchased and its name.
-- Calculate date ranges dynamically based on Today's Date : ${new Date().toISOString()}.
 - Identify where (store/restaurant/location) food was purchased.
 - Calculate spending and expenses related to food bought.
+- ALWAYS USE CURRENT DATE AND TIME ${new Date().toISOString()} in (YYYY-MM-DDTHH:mm) RFC3339 format for calculate time constraint.
 
 Tool Usage:
-1. Use 'find_receipt_information' when the query includes any time constraint like yesterday, 20th June, 31st december 2022, last week:
-    - Understand and analyze the specific date or time.
-    - Summarize the startDateTime and endDateTime for time range.
+1. Always use 'find_receipt_withtime' tool when the query includes any time constraint like yesterday, 20th June, 31st december 2022, last week,:
+    - Always understand and analyze the specific time constraint in the user query.
+    - Last week means 7 days ago, yesterday means 1 day ago, etc.
+    - Always calculate the StartDate and EndDate correctly based on Today's Date (YYYY-MM-DDTHH:mm): ${new Date().toISOString()}.
     - Response using the data clearly using markdown.
     
-2. Use 'find_receipt_withoutdate' when the query not includes any time constraint, like recently, lately:
+2. Always use 'find_receipt_withoutdate' tool when the query not includes any time constraint, like recently, lately:
     - Analyze user query.
     - Summarize the data clearly using makrdown.` },
             { role: 'user', content: userQuestion }
@@ -185,7 +186,7 @@ Tool Usage:
             const initialResponse = await this._Ollama.chat({
                 model: 'llama3.2:latest',
                 messages: messages,
-                tools: tools,
+                tools,
                 // think: true  
             });
             messages.push(initialResponse.message);
@@ -195,7 +196,7 @@ Tool Usage:
                 for (const toolCall of initialResponse.message.tool_calls) {
                     
                     let funcResult: string = '';
-                    if (toolCall.function.name === 'find_receipt_information') {
+                    if (toolCall.function.name === 'find_receipt_withtime') {
                         const arg = toolCall.function.arguments as { startDate : string , endDate : string};
                         funcResult = await this.SearchQuery(userQuestion, new Date(arg.startDate), new Date(arg.endDate));
                     } 
