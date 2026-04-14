@@ -15,7 +15,7 @@
       - Upload CSV -> List table
       - Upload Recipt -> extract -> convert into vector -> Qdrant VDB -> User query -> LLM -> (Rest / MCP) knowledge -> Result
   4. Docker using CI/CD pipeline local hosted
-- Tech stack : Qdrant VDB, Local Docker, React UI, Nodejs + Typescript, Ollama model (LLM and embeddings), Github Action CI/CD, Tesseract extraction + gemma3 (Computer Vision)
+- Tech stack : Qdrant VDB, Local Docker, React UI + vite, Nestjs Typescript, Ollama model (LLM and embeddings), Github Action CI/CD, Tesseract extraction + gemma3 (Computer Vision)
 
 
 ## Getting Started CSV Parser
