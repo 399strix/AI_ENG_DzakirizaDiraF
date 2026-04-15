@@ -26,11 +26,6 @@ export class RagServiceController {
         const result = await this._RagServices.createCollection();
         return JSON.parse(JSON.stringify({message: 'Collection created successfully', hasil: result}));
     }
-
-    // @Post('geeton')
-    // async upsertCollection(@Body() input: any): Promise<void> {
-    //     await this._RagServices.upsertCollection(input);
-    // }
     
     @Post('upsert-collection')
     @UseInterceptors(FileInterceptor('file'))

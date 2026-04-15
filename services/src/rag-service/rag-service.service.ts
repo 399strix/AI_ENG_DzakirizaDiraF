@@ -140,14 +140,14 @@ export class RagService {
             {
                 type: 'function',
                 function: {
-                    name: 'find_receipt_withtime',
+                    name: 'find_receipt_withrange',
                     description: 'Get all meal history information within a specific date or time range from receipt uploaded. Use this for questions that mentioned time constraint "what food i ate from 20 june until 27 june", "how much i spend between 28 December and 31st December this year", "what i eat last week?"',
                     parameters: {
                         type: 'object',
-                        required: [ 'startDate', 'endDate'],
+                        required: [ 'a', 'b'],
                         properties: {
-                            startDate: { type: 'string', description: `The latest date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, used as time range of food history findings. Use current date if necessary ${new Date().toISOString()}`, optional: false},
-                            endDate: { type: 'string', description: `The last date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, used as time range of food history findings. Use current date if necessary ${new Date().toISOString()}`, optional: false},
+                            a: { type: 'string', description: `The latest date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, used as time range of food history findings. Use current date if necessary ${new Date().toISOString()}`},
+                            b: { type: 'string', description: `The last date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, used as time range of food history findings. Use current date if necessary ${new Date().toISOString()}`},
                         },
                     },
                 },
@@ -155,15 +155,16 @@ export class RagService {
             {
                 type: 'function',
                 function: {
-                    name: 'find_receipt_withoutdate',
-                    description: 'Get all meal history information from receipt uploaded based on specific date. Use this for questions like "what is all my expense?", "what i ate yesterday?", "what meal i ate recently?", "how many receipt fo i have?", "what is the total spending of my latest purchases?"',
-                    // parameters:{
-                    //     type: 'object',
-                    //     required: [],
-                    //     properties: {
-                    //         dateTime: { type: 'string', description: `The date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, usedd as specific time of food history findings`, optional: true }
-                    //     },
-                    // }
+                    name: 'find_receipt_specific',
+                    description: 'Get all meal history information from receipt uploaded with or without specific date or time. Use this for questions like "what is all my expense?", "what i ate yesterday?", "what meal i ate recently?", "how many receipt fo i have?", "what is the total spending of my latest purchases?"',
+                    parameters:{
+                        type: 'object',
+                        required: [],
+                        properties: {
+                            a: { type: 'string', description: `The date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, used as specific time of food history findings`},
+                            b: { type: 'string', description: `The date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, used as specific time of food history findings. Use current date if necessary ${new Date().toISOString()}`}
+                        },
+                    }
                 },
             },
         ]
@@ -179,13 +180,13 @@ Your Capabilities:
 - ALWAYS USE CURRENT DATE AND TIME ${new Date().toISOString()} in (YYYY-MM-DDTHH:mm) RFC3339 format for calculate time constraint.
 
 Tool Usage:
-1. Always use 'find_receipt_withtime' tool when the query includes any time constraint like yesterday, 20th June, 31st december 2022, last week,:
+1. Always use 'find_receipt_withrange' tool when the query includes any time constraint like yesterday, 20th June, 31st december 2022, last week,:
     - Always understand and analyze the specific time constraint in the user query.
     - Last week means 7 days ago, yesterday means 1 day ago, etc.
     - Always calculate the StartDate and EndDate correctly based on Today's Date (YYYY-MM-DDTHH:mm): ${new Date().toISOString()}.
     - Response using the data clearly using markdown.
     
-2. Always use 'find_receipt_withoutdate' tool when the query not includes any time constraint, like recently, lately:
+2. Always use 'find_receipt_specific' tool when the query not includes any time constraint, like recently, lately:
     - Analyze user query.
     - Summarize the data clearly using makrdown.` },
             { role: 'user', content: userQuestion }
@@ -205,13 +206,13 @@ Tool Usage:
                 for (const toolCall of initialResponse.message.tool_calls) {
                     
                     let funcResult: string = '';
-                    if (toolCall.function.name === 'find_receipt_withtime') {
-                        const arg = toolCall.function.arguments as { startDate : string , endDate : string};
-                        funcResult = await this.SearchQuery(userQuestion, new Date(arg.startDate), new Date(arg.endDate));
+                    if (toolCall.function.name === 'find_receipt_withrange') {
+                        const arg = toolCall.function.arguments as { a : string , b : string};
+                        funcResult = await this.SearchQuery(userQuestion, new Date(arg.a), new Date(arg.b));
                     } 
-                    else if (toolCall.function.name === 'find_receipt_withoutdate') {
-                        // const arg = toolCall.function.arguments as { dateTime : string};
-                        funcResult = await this.SearchQuery(userQuestion);
+                    else if (toolCall.function.name === 'find_receipt_specific') {
+                        const arg = toolCall.function.arguments as { a : string};
+                        funcResult = await this.SearchQuery(userQuestion, new Date(arg.a));
                     }
                     else{
                         funcResult = 'unknown tool';
