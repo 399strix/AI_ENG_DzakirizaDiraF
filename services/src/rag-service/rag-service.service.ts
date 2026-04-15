@@ -140,36 +140,42 @@ export class RagService {
             {
                 type: 'function',
                 function: {
-                name: 'find_receipt_withtime',
-                description: 'Get all food receipt information within a specific date or time range. Use this for questions that mentioned time constraint "what i ate yesterday?", "what food i ate from 20 june until 27 june", "how much i spend in 31st December This month", "what i eat last week?"',
-                parameters: {
-                    type: 'object',
-                    required: [ 'startDate', 'endDate'],
-                    properties: {
-                        startDate: { type: 'string', description: `The latest date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, used as time range of food receipt findings. Use current date if necessary ${new Date().toISOString()}`},
-                        endDate: { type: 'string', description: `The last date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, used as time range of food receipt findings. Use current date if necessary ${new Date().toISOString()}`},
+                    name: 'find_receipt_withtime',
+                    description: 'Get all meal history information within a specific date or time range from receipt uploaded. Use this for questions that mentioned time constraint "what food i ate from 20 june until 27 june", "how much i spend between 28 December and 31st December this year", "what i eat last week?"',
+                    parameters: {
+                        type: 'object',
+                        required: [ 'startDate', 'endDate'],
+                        properties: {
+                            startDate: { type: 'string', description: `The latest date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, used as time range of food history findings. Use current date if necessary ${new Date().toISOString()}`, optional: false},
+                            endDate: { type: 'string', description: `The last date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, used as time range of food history findings. Use current date if necessary ${new Date().toISOString()}`, optional: false},
+                        },
                     },
-                },
                 },
             },
             {
                 type: 'function',
                 function: {
                     name: 'find_receipt_withoutdate',
-                    description: 'Get all food receipt information from receipt uploaded. Use this for questions like "what is all my expense?", "what food i ate recently?", "how many receipt fo i have?", "what is the total spending of my purchases?"',
-    
+                    description: 'Get all meal history information from receipt uploaded based on specific date. Use this for questions like "what is all my expense?", "what i ate yesterday?", "what meal i ate recently?", "how many receipt fo i have?", "what is the total spending of my latest purchases?"',
+                    // parameters:{
+                    //     type: 'object',
+                    //     required: [],
+                    //     properties: {
+                    //         dateTime: { type: 'string', description: `The date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, usedd as specific time of food history findings`, optional: true }
+                    //     },
+                    // }
                 },
             },
         ]
 
         const messages : Message [] = [
-            { role: 'system', content: `You are a Food Receipt Assistant that helps users retrieve and analyze their food purchase history, receipt data, and eating history from uploaded receipts. Your goal is to provide direct and factual answers based on the user's uploaded receipt data.
+            { role: 'system', content: `You are a Meal Purchases Assistant that helps users retrieve and analyze their food receipt information, meal data, total meal expenses, and eating history from uploaded receipts. Your goal is to provide direct and factual answers based on the user's uploaded food receipt data.
 Your Capabilities:
 - Answer questions about food purchases, expenses, items, and locations.
 - Use available tools to retrieve accurate data before answering.
 - Identify the number of food purchased and its name.
 - Identify where (store/restaurant/location) food was purchased.
-- Calculate spending and expenses related to food bought.
+- Calculate total spending and expenses related to food bought by sum all the food prices including the decimal.
 - ALWAYS USE CURRENT DATE AND TIME ${new Date().toISOString()} in (YYYY-MM-DDTHH:mm) RFC3339 format for calculate time constraint.
 
 Tool Usage:
@@ -204,6 +210,7 @@ Tool Usage:
                         funcResult = await this.SearchQuery(userQuestion, new Date(arg.startDate), new Date(arg.endDate));
                     } 
                     else if (toolCall.function.name === 'find_receipt_withoutdate') {
+                        // const arg = toolCall.function.arguments as { dateTime : string};
                         funcResult = await this.SearchQuery(userQuestion);
                     }
                     else{
