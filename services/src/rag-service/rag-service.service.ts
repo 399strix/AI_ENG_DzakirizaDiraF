@@ -7,6 +7,7 @@ import { QdrantClient } from '@qdrant/js-client-rest';
 import { EmbedResponse, Message, Ollama } from 'ollama';
 import * as crypto from 'crypto';
 import Tesseract from "tesseract.js";
+import { match } from 'assert';
 
 
 @Injectable()
@@ -101,25 +102,46 @@ export class RagService {
         }
     }
 
-    async SearchQuery(query: string, dateBefore?: Date, dateAfter?: Date) : Promise<string>{
+    async SearchSpecificQuery(query: string, dateBefore: Date) : Promise<string>{
         try{
             const batchIndex = await this.GetVector(query);
+            const runQuery =  await this._QdrantClient.query('receipt_collection', {
+                query: batchIndex.embeddings[0],
+                filter: {
+                    must: [{ key: "date", match: {value: dateBefore.toISOString() ?? new Date().toISOString()} }]
+                },
+                limit: 5,
+                with_payload: true,
+                with_vector: true
+            })
+            const data = runQuery.points.map(p => p.payload);
+            return JSON.stringify(data);
+        }catch(err){
+            console.error('Error searching query:', err);
+            return 'failed searchQdrant';
+        }
+    }
+
+    async SearchQuery(query: string, dateBefore?: string, dateAfter?: string) : Promise<string>{
+        try{
             let runQuery;
             if(dateBefore == undefined || dateAfter == undefined){
+                const batchIndex = await this.GetVector(query);
                 runQuery =  await this._QdrantClient.query('receipt_collection', {
                     query: batchIndex.embeddings[0],
-                    limit: 10,
+                    limit: 5,
                     with_payload: true,
                     with_vector: true
                 })
             }else{
-                runQuery =  await this._QdrantClient.query('receipt_collection', {
-                    query: batchIndex.embeddings[0],
+                runQuery =  await this._QdrantClient.scroll('receipt_collection', {
                     filter: {
-                        must: [{ key: "date", range: { 
-                            gte: dateBefore.toISOString() ?? new Date().setDate(new Date().getDate()-1).toString(), 
-                            lte: dateAfter.toISOString() ?? new Date().toISOString()
-                        } }]
+                        must: [
+                            { key: "date", range: { 
+                                gte: dateBefore, 
+                                lte: dateAfter
+                            }}
+                        ]
                     },
                     limit: 10,
                     with_payload: true,
@@ -141,54 +163,51 @@ export class RagService {
                 type: 'function',
                 function: {
                     name: 'find_receipt_withrange',
-                    description: 'Get all meal history information within a specific date or time range from receipt uploaded. Use this for questions that mentioned time constraint "what food i ate from 20 june until 27 june", "how much i spend between 28 December and 31st December this year", "what i eat last week?"',
+                    description: 'Get all meal history information within a specific time range. Use this for questions that mentioned time constraint "what food i ate from 20 june until 27 june", "how much i spend between 28 December and 31st December this year", "what i eat last week?", "give my total expense for food yesterday"',
                     parameters: {
                         type: 'object',
-                        required: [ 'a', 'b'],
+                        required: [ 'dateStart', 'dateEnd'],
                         properties: {
-                            a: { type: 'string', description: `The latest date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, used as time range of food history findings. Use current date if necessary ${new Date().toISOString()}`},
-                            b: { type: 'string', description: `The last date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, used as time range of food history findings. Use current date if necessary ${new Date().toISOString()}`},
+                            dateStart: { type: 'string', description: `The latest date or time in (YYYY-MM-DDTHH:mm) RFC3339 format WITHOUT TIMEZONE OFFSET, used as time range of food history findings. Use current date to calculate time constraint: ${new Date().toISOString()}`},
+                            dateEnd: { type: 'string', description: `The last date or time in (YYYY-MM-DDTHH:mm) RFC3339 format WITHOUT TIMEZONE OFFSET, used as time range of food history findings. Use current date to calculate time constraint: ${new Date().toISOString()}`},
                         },
                     },
                 },
             },
-            {
-                type: 'function',
-                function: {
-                    name: 'find_receipt_specific',
-                    description: 'Get all meal history information from receipt uploaded with or without specific date or time. Use this for questions like "what is all my expense?", "what i ate yesterday?", "what meal i ate recently?", "how many receipt fo i have?", "what is the total spending of my latest purchases?"',
-                    parameters:{
-                        type: 'object',
-                        required: [],
-                        properties: {
-                            a: { type: 'string', description: `The date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, used as specific time of food history findings`},
-                            b: { type: 'string', description: `The date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, used as specific time of food history findings. Use current date if necessary ${new Date().toISOString()}`}
-                        },
-                    }
-                },
-            },
+            // {
+            //     type: 'function',
+            //     function: {
+            //         name: 'find_receipt_specific',
+            //         description: 'Get all meal history information from receipt uploaded with or without specific date or time. Use this for questions like "what is all my expense?", "what i ate yesterday?", "what meal i ate recently?", "how many receipt fo i have?", "what is the total spending of my latest purchases?"',
+            //         parameters:{
+            //             type: 'object',
+            //             required: [],
+            //             properties: {
+            //                 a: { type: 'string', description: `The date or time in (YYYY-MM-DDTHH:mm) RFC3339 format, used as specific time of food history findings. Use current date to calculate time constraint: ${new Date().toISOString()}`},
+            //                 b: { type: 'string', description: `This tool is not used.`}
+            //             },
+            //         }
+            //     },
+            // },
         ]
 
         const messages : Message [] = [
-            { role: 'system', content: `You are a Meal Purchases Assistant that helps users retrieve and analyze their food receipt information, meal data, total meal expenses, and eating history from uploaded receipts. Your goal is to provide direct and factual answers based on the user's uploaded food receipt data.
+            { role: 'system', content: `You are a Meal Purchases Assistant that helps users retrieve and analyze their food receipt information in the past, meal data, total meal expenses, and eating history from uploaded receipts. Your goal is to provide direct and factual answers based on the user's query.
 Your Capabilities:
 - Answer questions about food purchases, expenses, items, and locations.
 - Use available tools to retrieve accurate data before answering.
 - Identify the number of food purchased and its name.
 - Identify where (store/restaurant/location) food was purchased.
 - Calculate total spending and expenses related to food bought by sum all the food prices including the decimal.
-- ALWAYS USE CURRENT DATE AND TIME ${new Date().toISOString()} in (YYYY-MM-DDTHH:mm) RFC3339 format for calculate time constraint.
+- ALWAYS USE CURRENT DATE AND TIME ${new Date().toISOString()} in (YYYY-MM-DDTHH:mm) RFC3339 format WITHOUT TIMEZONE OFFSET to calculate the time constraint.
 
 Tool Usage:
-1. Always use 'find_receipt_withrange' tool when the query includes any time constraint like yesterday, 20th June, 31st december 2022, last week,:
+1. Always use 'find_receipt_withrange' tool when the query includes date range or specific time constraint like 'between last 20th June and now', 'from 24th december 2022 until 31st december 2022', 'last week until now', 'yesterday', 'last week', 'today', 'last 20th', 'October 23rd 2020', etc. :
     - Always understand and analyze the specific time constraint in the user query.
-    - Last week means 7 days ago, yesterday means 1 day ago, etc.
-    - Always calculate the StartDate and EndDate correctly based on Today's Date (YYYY-MM-DDTHH:mm): ${new Date().toISOString()}.
-    - Response using the data clearly using markdown.
-    
-2. Always use 'find_receipt_specific' tool when the query not includes any time constraint, like recently, lately:
-    - Analyze user query.
-    - Summarize the data clearly using makrdown.` },
+    - Always calculate the dateStart and dateEnd correctly based on Today's Date (YYYY-MM-DDTHH:mm): ${new Date().toISOString()}.
+    - dateStart is the time range start, use 00:00:01 for the hours if not specify.
+    - dateEnd is the time range end, use 23:59:59 for the hours if not specify.
+    - Response using the data clearly using markdown.` },
             { role: 'user', content: userQuestion }
         ];
 
@@ -207,13 +226,13 @@ Tool Usage:
                     
                     let funcResult: string = '';
                     if (toolCall.function.name === 'find_receipt_withrange') {
-                        const arg = toolCall.function.arguments as { a : string , b : string};
-                        funcResult = await this.SearchQuery(userQuestion, new Date(arg.a), new Date(arg.b));
+                        const arg = toolCall.function.arguments as { dateStart : string , dateEnd : string};
+                        funcResult = await this.SearchQuery(userQuestion, arg.dateStart, arg.dateEnd);
                     } 
-                    else if (toolCall.function.name === 'find_receipt_specific') {
-                        const arg = toolCall.function.arguments as { a : string};
-                        funcResult = await this.SearchQuery(userQuestion, new Date(arg.a));
-                    }
+                    // else if (toolCall.function.name === 'find_receipt_specific') {
+                    //     const arg = toolCall.function.arguments as { a : string};
+                    //     funcResult = await this.SearchSpecificQuery(userQuestion, new Date(arg.a));
+                    // }
                     else{
                         funcResult = 'unknown tool';
                     }
