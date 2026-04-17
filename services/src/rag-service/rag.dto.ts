@@ -1,15 +1,15 @@
-export class ExtractionOutputDto {
+export interface ExtractionOutputDto {
   store: string;
   currency: string;
   date: string;
   items: ReceiptItemDto[];
 }
 
-export class ReceiptItemDto {
+export interface ReceiptItemDto {
   name: string;
   price: number;
 }
 
-export class UserMessage{
+export interface UserMessage{
     input: string;
 }

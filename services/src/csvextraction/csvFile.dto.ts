@@ -1,10 +1,10 @@
-export class CsvFileDto{
+export interface CsvFileDto{
   fileName: string;
   MimeType: string;
   fileContent: string;
 }
 
-export class CsvResultDto{
+export interface CsvResultDto{
   index: number;
   customerId: string;
   firstName: string;
