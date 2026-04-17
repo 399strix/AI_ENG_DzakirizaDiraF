@@ -38,6 +38,15 @@ export class RagService {
         }
     }
 
+    async checkQdrantCollection(): Promise<JSON>{
+        try{
+            const tesColl = await this._QdrantClient.getCollection('receipt_collection');
+            return JSON.parse(JSON.stringify(tesColl));
+        }catch(error){
+            throw new Error(JSON.parse(`${(error as Error).message}`));
+        }
+    }
+
     async extractTextFromImage(image: Buffer): Promise<string> {
         try {
             const { data: { text } } = await Tesseract.recognize(image, "eng", {

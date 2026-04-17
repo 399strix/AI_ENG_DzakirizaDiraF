@@ -30,7 +30,6 @@ export class RagServiceController {
     @Post('upsert-collection')
     @UseInterceptors(FileInterceptor('file'))
     async upsertCollection(@UploadedFile() file: Express.Multer.File): Promise<void> {
-        const input = file.buffer.toString('base64');
         await this._RagServices.upsertCollection(file.buffer);
     }
 }

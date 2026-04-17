@@ -1,14 +1,16 @@
 services:
   backend:
-    build: ./services
+    build: 
+      context: ./services
+      dockerfile: Dockerfile
     container_name: shopee-backend
     ports:
       - "3000:3000"
     env_file:
       - ./services/.env.example
     environment:
-      - QDRANT_URL=http://host.docker.internal:6333
-      - OLLAMA_URL=http://host.docker.internal:11434
+      - QDRANT_URL=http://qdrant:6333
+      - OLLAMA_URL=http://ollama:11434
       - ORIGIN_URL=http://localhost:5173
     depends_on:
       - qdrant
